@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pastel Social - Profile</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffe6ea; 
+      color: #333;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+    }
+    header {
+      background: #ffc2cc;
+      border-bottom: 2px solid #ff7f8b;
+      padding: 15px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #b34759;
+    }
+    .top-buttons {
+      text-align: center;
+      margin: 10px;
+    }
+    .top-buttons button {
+      background: #ffb3bf;
+      border: none;
+      color: #333;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.4s;
+      font-weight: bold;
+    }
+    .top-buttons button:hover {
+      background: #ff7f8b;
+    }
+    .content {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .profile-info {
+      background: #fff;
+      border: 1px solid #ffc2cc;
+      border-radius: 4px;
+      padding: 15px;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .profile-info img {
+      max-width: 100px;
+      border-radius: 50%;
+      margin: 10px 0;
+    }
+    .profile-update {
+      background: #fff;
+      border: 1px solid #ffc2cc;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .profile-update input,
+    .profile-update button {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 8px;
+      border: 1px solid #ffc2cc;
+      border-radius: 4px;
+    }
+    .profile-posts {
+      background: #fff;
+      border: 1px solid #ffc2cc;
+      border-radius: 4px;
+      padding: 15px;
+    }
+    .post-item {
+      background: #ffe6ea;
+      border: 1px solid #ffc2cc;
+      border-radius: 4px;
+      padding: 10px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pastel Social - My Profile</h1>
+  </header>
+  <div class="top-buttons">
+    <button onclick="goFeed()">Back to Feed</button>
+  </div>
+  <div class="content">
+    <div id="profileInfo" class="profile-info"></div>
+    <div class="profile-update">
+      <h3>Update Profile</h3>
+      <input type="text" id="profileBio" placeholder="Bio">
+      <input type="text" id="profileLocation" placeholder="Location">
+      <input type="file" id="profileImage">
+      <button onclick="updateProfile()">Save Profile</button>
+    </div>
+    <div class="profile-posts">
+      <h3>My Posts</h3>
+      <div id="myPosts"></div>
+    </div>
+  </div>
+
+  <script>
+    function goFeed() {
+      window.location = "/feed";
+    }
+    async function loadProfile() {
+      const meRes = await fetch('/api/me', { credentials: 'include' });
+      if (!meRes.ok) return window.location='/login';
+      const me = await meRes.json();
+
+      const userRes = await fetch(`/api/users/${me.id}`, { credentials: 'include' });
+      if (!userRes.ok) return alert("Failed to load profile");
+      const data = await userRes.json();
+      const user = data.user;
+      const posts = data.posts;
+
+      const infoDiv = document.getElementById("profileInfo");
+      infoDiv.innerHTML = `
+        <h2>${user.username}</h2>
+        <p>Bio: ${user.bio || ''}</p>
+        <p>Location: ${user.location || ''}</p>
+        ${user.profileImage ? `<img src="${user.profileImage.replace('uploads','/uploads')}" alt="Profile Image">` : ''}
+        <p>XP: ${user.xp || 0}</p>
+      `;
+
+      const postsDiv = document.getElementById("myPosts");
+      if (!posts.length) {
+        postsDiv.innerHTML = "<p>No posts yet.</p>";
+        return;
+      }
+      postsDiv.innerHTML = posts.map(p => `
+        <div class="post-item">
+          <strong>${p.username}</strong> - ${new Date(p.timestamp).toLocaleString()}
+          <p>${p.message}</p>
+          ${p.image ? `<img src="${p.image.replace('uploads','/uploads')}" style="max-width:100px;">` : ''}
+        </div>
+      `).join('');
+    }
+
+    async function updateProfile() {
+      const bio = document.getElementById("profileBio").value;
+      const location = document.getElementById("profileLocation").value;
+      const file = document.getElementById("profileImage").files[0];
+      const formData = new FormData();
+      formData.append('bio', bio);
+      formData.append('location', location);
+      if (file) formData.append('profileImage', file);
+
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+      if (res.ok) {
+        alert("Profile updated!");
+        loadProfile();
+      } else {
+        alert("Failed to update profile.");
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

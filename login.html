@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Pastel Social - Login</title>
+  <style>
+    body {
+      margin: 0; 
+      padding: 0;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      background: #ffe6ea; /* light pink pastel */
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      height: 100vh;
+      color: #333;
+    }
+    .login-container {
+      background: #ffffff; /* white box */
+      border: 2px solid #ffc2cc; /* pastel pink border */
+      padding: 20px 30px;
+      border-radius: 8px;
+      width: 320px;
+      box-shadow: 0 0 15px rgba(255,194,204,0.4);
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 15px;
+      font-size: 24px;
+      color: #cc4e5c; /* darker pink text */
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 4px;
+      border: 1px solid #ffb3bf;
+      background: #fff;
+      color: #333;
+    }
+    input:focus {
+      outline: none;
+      border-color: #ff7f8b;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 4px;
+      background: #ffb3bf; /* pastel pink button */
+      color: #333;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.4s;
+    }
+    button:hover {
+      background: #ff7f8b;
+    }
+    #authMessage {
+      color: #cc4e5c;
+      margin-top: 10px;
+      font-size: 14px;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Pastel Social</h1>
+    <input type="text" id="authUsername" placeholder="Username"><br>
+    <input type="password" id="authPassword" placeholder="Password"><br>
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="login()">Login</button>
+    <p id="authMessage"></p>
+  </div>
+
+  <script>
+    async function signup() {
+      const username = document.getElementById("authUsername").value;
+      const password = document.getElementById("authPassword").value;
+      const authMessage = document.getElementById("authMessage");
+      authMessage.innerText = "";
+
+      if (!username || !password) {
+        authMessage.innerText = "Please enter both username and password!";
+        return;
+      }
+
+      const res = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+
+      if (res.ok) {
+        authMessage.style.color = "#008000";
+        authMessage.innerText = "Signup successful! You can now log in.";
+      } else {
+        const data = await res.json();
+        authMessage.style.color = "#cc4e5c";
+        authMessage.innerText = data.error || "Signup failed.";
+      }
+    }
+
+    async function login() {
+      const username = document.getElementById("authUsername").value;
+      const password = document.getElementById("authPassword").value;
+      const authMessage = document.getElementById("authMessage");
+      authMessage.innerText = "";
+
+      if (!username || !password) {
+        authMessage.innerText = "Please enter both username and password!";
+        return;
+      }
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+
+      if (res.ok) {
+        window.location = "/feed";
+      } else {
+        const errData = await res.json();
+        authMessage.style.color = "#cc4e5c";
+        authMessage.innerText = errData.error || "Login failed.";
+      }
+    }
+  </script>
+</body>
+</html>

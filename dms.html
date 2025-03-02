@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pastel Social - DMs</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffe6ea; /* pastel pink background */
+      color: #333;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+    }
+    header {
+      background: #ffc2cc;
+      border-bottom: 2px solid #ff7f8b;
+      padding: 15px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #b34759;
+    }
+    .top-buttons {
+      text-align: center;
+      margin: 10px;
+    }
+    .top-buttons button {
+      background: #ffb3bf;
+      border: none;
+      color: #333;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.4s;
+      font-weight: bold;
+    }
+    .top-buttons button:hover {
+      background: #ff7f8b;
+    }
+    .content {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .dm-box {
+      background: #fff;
+      border: 1px solid #ffc2cc;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    #dmList .dm-item {
+      background: #fff;
+      border: 1px solid #ffc2cc;
+      border-radius: 4px;
+      margin: 5px 0;
+      padding: 10px;
+    }
+    #dmMessageDisplay {
+      color: #b34759;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pastel Social - Direct Messages</h1>
+  </header>
+  <div class="top-buttons">
+    <button onclick="goFeed()">Back to Feed</button>
+  </div>
+  <div class="content">
+    <div class="dm-box">
+      <input type="text" id="dmReceiver" placeholder="Receiver User ID" style="width:100%;margin-bottom:5px;">
+      <input type="text" id="dmMessage" placeholder="Message..." style="width:100%;margin-bottom:5px;">
+      <button onclick="sendDM()">Send DM</button>
+      <button onclick="loadDMs()">Load My DMs</button>
+      <p id="dmMessageDisplay"></p>
+    </div>
+    <div id="dmList"></div>
+  </div>
+
+  <script>
+    function goFeed() {
+      window.location = "/feed";
+    }
+    async function sendDM() {
+      const receiverId = document.getElementById("dmReceiver").value;
+      const message = document.getElementById("dmMessage").value;
+      const disp = document.getElementById("dmMessageDisplay");
+      disp.innerText = "";
+      if (!receiverId || !message) {
+        disp.innerText = "Enter receiver ID & message!";
+        return;
+      }
+      const res = await fetch('/api/dms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ receiverId, message })
+      });
+      if (res.ok) {
+        disp.innerText = "DM sent!";
+      } else {
+        disp.innerText = "Failed to send DM.";
+      }
+    }
+    async function loadDMs() {
+      const dmList = document.getElementById("dmList");
+      dmList.innerHTML = "";
+      const res = await fetch('/api/dms', { credentials: 'include' });
+      if (!res.ok) {
+        dmList.innerHTML = "<p>Failed to load DMs.</p>";
+        return;
+      }
+      const dms = await res.json();
+      if (!dms.length) {
+        dmList.innerHTML = "<p>No DMs found.</p>";
+        return;
+      }
+      dmList.innerHTML = dms.map(dm => `
+        <div class="dm-item">
+          <strong>${dm.senderName}</strong> → <strong>${dm.receiverName}</strong>: ${dm.message}
+          <br><small>${new Date(dm.timestamp).toLocaleString()}</small>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

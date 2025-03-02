@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pastel Social - Voice Chat</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffe6ea; 
+      color: #333;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+    }
+    header {
+      background: #ffc2cc;
+      border-bottom: 2px solid #ff7f8b;
+      padding: 15px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #b34759;
+    }
+    .top-buttons {
+      text-align: center;
+      margin: 10px;
+    }
+    .top-buttons button {
+      background: #ffb3bf;
+      border: none;
+      color: #333;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.4s;
+      font-weight: bold;
+    }
+    .top-buttons button:hover {
+      background: #ff7f8b;
+    }
+    .content {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .voice-box {
+      background: #fff;
+      border: 1px solid #ffc2cc;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .channel-item {
+      background: #fff;
+      border: 1px solid #ffc2cc;
+      border-radius: 4px;
+      margin: 5px 0;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pastel Social - Voice/Video Chat</h1>
+  </header>
+  <div class="top-buttons">
+    <button onclick="goFeed()">Back to Feed</button>
+  </div>
+  <div class="content">
+    <div class="voice-box">
+      <input type="text" id="voiceChannelName" placeholder="Channel name" style="width:100%;margin-bottom:5px;">
+      <button onclick="createVoiceChannel()">Create Voice Channel</button>
+    </div>
+    <div id="voiceChannelList"></div>
+  </div>
+
+  <script>
+    function goFeed() {
+      window.location = "/feed";
+    }
+    async function createVoiceChannel() {
+      const name = document.getElementById("voiceChannelName").value;
+      if (!name) return alert("Enter channel name!");
+      const res = await fetch('/api/voiceChannels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ channelName: name })
+      });
+      if (res.ok) {
+        alert("Voice channel created!");
+        loadChannels();
+      } else {
+        alert("Failed to create channel.");
+      }
+    }
+    async function loadChannels() {
+      const list = document.getElementById("voiceChannelList");
+      list.innerHTML = "";
+      const res = await fetch('/api/voiceChannels', { credentials: 'include' });
+      if (!res.ok) {
+        list.innerHTML = "<p>Failed to load channels.</p>";
+        return;
+      }
+      const channels = await res.json();
+      if (!channels.length) {
+        list.innerHTML = "<p>No voice channels found.</p>";
+        return;
+      }
+      list.innerHTML = channels.map(c => `
+        <div class="channel-item">
+          Channel: ${c.channelName} (ID: ${c.id})
+          <!-- In a real app, add a "Join" button to start WebRTC. -->
+        </div>
+      `).join('');
+    }
+    loadChannels();
+  </script>
+</body>
+</html>
